@@ -20,12 +20,14 @@ class Backtest_single:
 
         self.df_result['current_cash'] = self.current_cash
         self.df_result['market_value'] = None
+        self.df_result['buy'] = None
+        self.df_result['sell'] = None
 
     def simulation(self) -> pd.DataFrame:
         """매수매도 백테스트 진행.
 
         Returns:
-        self.df_result (pd.DataFrame): 'current_cash', 'market_value'(평가금액)
+        pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액)
         """
         _code = 'temp_name'
         for i, date in enumerate(self.df_ohlc.index):
@@ -36,6 +38,7 @@ class Backtest_single:
                 if qty > 0:
                     self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
                     self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
+                    self.df_result['buy'].iloc[i] = target_buy_price
                     self.bought_dict[_code] = (target_buy_price, qty)
             # Sell
             # 세금 추가요망
@@ -44,6 +47,7 @@ class Backtest_single:
                 if qty == 0:
                     self.df_result['current_cash'].iloc[i:] += (target_sell_price*self.bought_dict[_code][1])
                     self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(self.bought_dict[_code][1]),',')} qty")
+                    self.df_result['sell'].iloc[i] = target_sell_price
                     del self.bought_dict[_code]
             # 평가금액 갱신
             self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i].copy()
@@ -51,7 +55,7 @@ class Backtest_single:
                 self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
         
         self.log.log_exit()
-        return self.df_result
+        return pd.concat([self.df_ohlc, self.df_result], axis=1)
 
     def data_check(self):
         """df_ohlc 입력 데이터를 검증."""
