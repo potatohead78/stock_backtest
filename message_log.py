@@ -7,7 +7,7 @@ class Message_log():
         self.log = open(f"결과/{datetime.now().strftime('%Y.%m.%d.%H%M%S')}.txt",'a+')
         print(datetime.now().strftime('[%m/%d %H:%M:%S]'), "시작", file = self.log)
 
-    def printlog(self, message, *args) -> None:
+    def printlog(self, message:str, *args) -> None:
         """메세지를 출력하고 저장함.
         
         Args: message (str): 메세지
