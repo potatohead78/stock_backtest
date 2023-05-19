@@ -9,6 +9,7 @@ class Plotting:
     def single(self, df_result:pd.DataFrame) -> None:
         """평가금액, 현금 및 캔들차트를 plotting 함.
             웹페이지가 출력되지 않을 경우 F5(새로고침)
+
         Args:
         df_result (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value', 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
