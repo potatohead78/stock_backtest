@@ -33,10 +33,11 @@ condition = {
                 "Buy_price":"['close']",
                 "Sell_price":"['close']"
                 }
+"""해당 조건의 데이터는 df_ohlc 컬럼에 존재하여야 합니다."""
 ```
 **4. 결과**
 ```
-df_result = Backtest_single(total_money, df_ohlc).simulation(condition)
+df_result = Backtest_single(current_cash, df_ohlc).simulation(condition)
 ```
 **5. 그래프**
 ```
