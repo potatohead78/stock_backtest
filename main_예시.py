@@ -51,8 +51,15 @@ df_ohlc = pd.DataFrame(rows, columns=columns, index=index)
 """index에 날짜를 입력합니다."""
 
 
-total_money = 10000000
+current_cash = 10000000
 """총 투자금"""
+
+
+buy_tax = 0.00015
+sell_tax = 0.00215
+"""buy_tax : 0.015% (거래수수료) = 0.015% (기본값)"""
+"""sell_tax : 0.015% (거래수수료) + 0.05% (증권거래세) + 0.15% (농어촌특별세) = 0.215% (기본값)"""
+"""buy_tax와 sell_tax 입력은 옵션입니다. 세금을 제외할 때는 각각 0을 입력해주세요."""
 
 
 condition = {
@@ -73,8 +80,9 @@ condition = {
 """
 
 
-df_result = Backtest_single(total_money, df_ohlc).simulation(condition)
+df_result = Backtest_single(current_cash, df_ohlc, buy_tax, sell_tax).simulation(condition)
 """df_result에는 OHLC와 현금, 평가금액, 매수금액, 매도금액 등이 입력 되어있습니다."""
+"""기본값은 buy_tax: 0.00015, sell_tax: 0.00215 입니다."""
 
 
 Plotting().single(df_result)
@@ -82,4 +90,4 @@ Plotting().single(df_result)
 
 
 # 여러 종목 동시 백테스트
-"""개발예정"""
+"""예정"""
