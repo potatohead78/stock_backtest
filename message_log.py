@@ -4,7 +4,8 @@ from datetime import datetime
 class Message_log():
     def __init__(self) -> None:
         os.makedirs('결과', exist_ok = True)
-        self.log = open('결과/' + datetime.now().strftime('%Y.%m.%d.%H%M%S') + '.txt','a+')
+        self.log = open(f"결과/{datetime.now().strftime('%Y.%m.%d.%H%M%S')}.txt",'a+')
+        print(datetime.now().strftime('[%m/%d %H:%M:%S]'), "시작", file = self.log)
 
     def printlog(self, message, *args) -> None:
         """메세지를 출력하고 저장함.
