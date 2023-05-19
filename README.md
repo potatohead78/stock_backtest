@@ -20,7 +20,12 @@ total_money = 10000000
 ```
 3. 매수매도 조건을 입력하기 (딕셔너리)
 ```
-condition = {"Buy":"['MFI5'] < 20", "Sell":"['MFI5'] > 80"}
+condition = {
+                "Buy":"['MFI5'] < 20",
+                "Sell":"['MFI5'] > 80",
+                "Buy_price":"['close']",
+                "Sell_price":"['close']"
+                }
 ```
 4. 결과
 ```
