@@ -48,7 +48,7 @@ index = ['2019-02-28',
 df_ohlc = pd.DataFrame(rows, columns=columns, index=index)
 """증권사 api 등을 활용하여 OHLC 데이터를 수집해주세요."""
 """OHLC는 데이터프레임 형식으로 입력합니다. (내림차순)"""
-"""index에 날짜를 입력합니다."""
+"""index에 날짜를 입력합니다. 2019-01-01 형식으로 변경해주세요."""
 
 
 current_cash = 10000000

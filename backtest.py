@@ -54,7 +54,7 @@ class Backtest_single:
             ohlc_to_today = self.df_ohlc.loc[:date]
             # Buy
             if _code not in list(self.bought_dict)[:]:
-                target_buy_price, qty = Strategy().buy_check(ohlc_to_today, self.current_cash, condition)
+                target_buy_price, qty = Strategy().buy_check(ohlc_to_today, self.df_result['current_cash'].iloc[i], condition)
                 if qty > 0:
                     self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
                     self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
