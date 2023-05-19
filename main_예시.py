@@ -2,7 +2,7 @@ from backtest import Backtest_single
 from plotting import Plotting
 import pandas as pd
 
-# 1개 종목 백테스트
+# 단일 종목 백테스트
 columns = ['open','high','low','close','volume','MFI5']
 rows = [[46400,46500,45100,45100,23569321,42.14411591],	
         [46000,46100,44800,44850,12926539,26.45925598],	
@@ -54,9 +54,21 @@ df_ohlc = pd.DataFrame(rows, columns=columns, index=index)
 total_money = 10000000
 """총 투자금"""
 
-df_result = Backtest_single(total_money, df_ohlc).simulation()
+
+condition = {"Buy":"['MFI5'] < 20", "Sell":"['MFI5'] > 80"}
+"""매수매도 조건을 입력해주세요."""
+"""해당 조건은 df_ohlc 컬럼에 존재하여야 합니다."""
+"""다중조건도 가능합니다.
+예시){"Buy":"['MFI5'] < 20 and ['volume'] > 1000000", "Sell":"['MFI5'] > 80"}"""
+
+
+df_result = Backtest_single(total_money, df_ohlc).simulation(condition)
+"""df_result에는 OHLC와 현금, 평가금액, 매수금액, 매도금액 등이 입력 되어있습니다."""
+
 
 Plotting().single(df_result)
+"""결과를 Plotting 합니다."""
+
 
 # 여러 종목 동시 백테스트
 """개발예정"""
