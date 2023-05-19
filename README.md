@@ -37,7 +37,7 @@ condition = {
 ```
 **4. 결과**
 ```
-df_result = Backtest_single(current_cash, df_ohlc).simulation(condition)
+df_result = Backtest_single(current_cash, df_ohlc, buy_tax, sell_tax).simulation(condition)
 ```
 **5. 그래프**
 ```
