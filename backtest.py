@@ -25,7 +25,7 @@ class Backtest_single:
         """매수매도 백테스트 진행.
 
         Returns:
-        self.df_result (pd.DataFrame): 'current_cash', 'market_value'
+        self.df_result (pd.DataFrame): 'current_cash', 'market_value'(평가금액)
         """
         _code = 'temp_name'
         for i, date in enumerate(self.df_ohlc.index):
@@ -54,13 +54,13 @@ class Backtest_single:
         return self.df_result
 
     def data_check(self):
-        """df_ohlc 입력 데이터를 검증"""
+        """df_ohlc 입력 데이터를 검증."""
         pass
 
 class Strategy:
     """매수와 매도 전략을 작성."""
     def buy_check(self, ohlc_to_today:pd.DataFrame, current_cash:int) -> tuple(int,int):
-        """매수 신호 체크
+        """매수 신호 체크.
 
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
@@ -79,7 +79,7 @@ class Strategy:
             return 0, 0
 
     def sell_check(self, ohlc_to_today:pd.DataFrame, bought_tuple:tuple(int,int)) -> tuple(int,int):
-        """매도 신호 체크
+        """매도 신호 체크.
         
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
