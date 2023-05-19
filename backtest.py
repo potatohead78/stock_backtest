@@ -27,7 +27,7 @@ class Backtest_single:
         """매수매도 백테스트 진행.
 
         Returns:
-        pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액)
+        pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액), 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
         _code = 'temp_name'
         for i, date in enumerate(self.df_ohlc.index):
