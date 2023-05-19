@@ -13,9 +13,9 @@ class Plotting:
         Args:
         df_result (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value', 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
-        fig = ms.make_subplots(rows=3, cols=1, specs=   [[{}],                # 평가금액
+        fig = ms.make_subplots(rows=3, cols=1, specs=   [[{}],                  # 평가금액
                                                         [{'rowspan':2}],        # 차트
-                                                        [None]                    # 차트
+                                                        [None]                  # 차트
                                                         ],shared_xaxes=True, horizontal_spacing=0.03, vertical_spacing=0.01)
 
         # row1
