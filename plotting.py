@@ -13,18 +13,23 @@ class Plotting:
         Args:
         df_result (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value', 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
-        fig = ms.make_subplots(rows=3, cols=1, specs=   [[{}],                  # 평가금액
-                                                        [{'rowspan':2}],        # 차트
+        fig = ms.make_subplots(rows=5, cols=1, specs=   [[{}],                  # 평가금액
+                                                        [{'rowspan':4}],        # 차트
+                                                        [None],                 # 차트
+                                                        [None],                 # 차트
                                                         [None]                  # 차트
                                                         ],shared_xaxes=True, horizontal_spacing=0.03, vertical_spacing=0.01)
 
         # row1
         market_value = go.Scatter(x=df_result.index,
+                                    mode='lines',
                                     y=df_result['market_value'],
                                     line=dict(color='blue', width=2),
                                     showlegend=False,
                                     name='평가금액')
-        current_cash = go.Scatter(x=df_result.index, y=df_result['current_cash'],
+        current_cash = go.Scatter(x=df_result.index,
+                                    mode='lines',
+                                    y=df_result['current_cash'],
                                     line=dict(color='red', width=2),
                                     showlegend=False,
                                     name='현금')
@@ -36,17 +41,45 @@ class Plotting:
                                 decreasing_line_color='blue',
                                 showlegend=False,
                                 name='')
+        ma5 = go.Scatter(x=df_result.index,
+                            y=df_result['ma5'],
+                            mode='lines',
+                            line=dict(color='green', width=2),
+                            opacity=0.4,
+                            name='ma5',
+                            showlegend=False)
+        ma20 = go.Scatter(x=df_result.index,
+                            y=df_result['ma20'],
+                            mode='lines',
+                            line=dict(color='red', width=2),
+                            opacity=0.4,
+                            name='ma20',
+                            showlegend=False)
+        ma60 = go.Scatter(x=df_result.index,
+                            y=df_result['ma60'],
+                            mode='lines',
+                            line=dict(color='orange', width=2),
+                            opacity=0.4,
+                            name='ma60',
+                            showlegend=False)
+        ma120 = go.Scatter(x=df_result.index,
+                            y=df_result['ma120'],
+                            mode='lines',
+                            line=dict(color='purple', width=2),
+                            opacity=0.4,
+                            name='ma120',
+                            showlegend=False)
         buy = go.Scatter(x=df_result.index,
                             y=df_result['buy'],
                             mode='markers',
-                            marker=dict(color='red',size=20,symbol='triangle-up'),
+                            marker=dict(color='chocolate',size=20,symbol='triangle-up'),
                             opacity=0.8,
                             showlegend=False,
                             name='매수')
         sell = go.Scatter(x=df_result.index,
                             y=df_result['sell'],
                             mode='markers',
-                            marker=dict(color='blue',size=20,symbol='triangle-down'),
+                            marker=dict(color='cyan',size=20,symbol='triangle-down'),
                             opacity=0.8,
                             showlegend=False,
                             name='매도')
@@ -55,6 +88,10 @@ class Plotting:
         fig.add_trace(current_cash,row=1,col=1)
 
         fig.add_trace(candle,row=2,col=1)
+        fig.add_trace(ma5,row=2,col=1)
+        fig.add_trace(ma20,row=2,col=1)
+        fig.add_trace(ma60,row=2,col=1)
+        fig.add_trace(ma120,row=2,col=1)
         fig.add_trace(buy,row=2,col=1)
         fig.add_trace(sell,row=2,col=1)
 
