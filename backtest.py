@@ -64,15 +64,19 @@ class Backtest_single:
             elif _code in list(self.bought_dict)[:]:
                 target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
                 if qty == 0:
+                    _target_buy_price = self.bought_dict[_code][0]
+                    _qty_buy = self.bought_dict[_code][1]
+                    
                     # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
-                    tax = (self.bought_dict[_code][0]*self.bought_dict[_code][1]*self.buy_tax) + (target_sell_price*self.bought_dict[_code][1]*self.sell_tax)
+                    tax = (_target_buy_price*_qty_buy*self.buy_tax) + (target_sell_price*_qty_buy*self.sell_tax)
 
-                    self.df_result['current_cash'].iloc[i:] += (target_sell_price*self.bought_dict[_code][1] - tax)
-                    self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(self.bought_dict[_code][1]),',')} qty, tax: {format(int(tax),',')} 원")
+                    _yield = 100*((target_sell_price*_qty_buy - tax)/(_target_buy_price*_qty_buy))-100
+                    self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
+                    self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
                     self.df_result['sell'].iloc[i] = target_sell_price
                     del self.bought_dict[_code]
             # 평가금액 갱신
-            self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i].copy()
+            self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
             for _code in list(self.bought_dict)[:]:
                 self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
         
