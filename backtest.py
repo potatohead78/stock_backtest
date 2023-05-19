@@ -5,11 +5,15 @@ pd.options.mode.chained_assignment = None
 
 class Backtest_single:
     """단일 종목의 백테스트를 진행."""
-    def __init__(self, current_cash:int, df_ohlc:pd.DataFrame) -> None:
+    def __init__(self, current_cash:int, df_ohlc:pd.DataFrame, buy_tax:float=0.00015, sell_tax:float=0.00215) -> None:
         """
         Args:
         current_cash (int): 총 투자금
         df_ohlc (pd.DataFrame): OHLC 컬럼 및 Strategy()에 필요한 컬럼
+        buy_tax (float): 0.015% (거래수수료) = 0.015% (기본값)
+        sell_tax (float): 0.015% (거래수수료) + 0.05% (증권거래세) + 0.15% (농어촌특별세) = 0.215% (기본값)
+
+        self.bought_dict: {_code:(target_buy_price, qty)}   (매수금액, 매수개수)
         """
         self.log = Message_log()
 
@@ -22,6 +26,9 @@ class Backtest_single:
         self.df_result['market_value'] = None
         self.df_result['buy'] = None
         self.df_result['sell'] = None
+
+        self.buy_tax = buy_tax
+        self.sell_tax = sell_tax
 
     def simulation(self, condition:dict) -> pd.DataFrame:
         """매수매도 백테스트 진행.
@@ -49,12 +56,14 @@ class Backtest_single:
                     self.df_result['buy'].iloc[i] = target_buy_price
                     self.bought_dict[_code] = (target_buy_price, qty)
             # Sell
-            # 세금 추가요망
             elif _code in list(self.bought_dict)[:]:
                 target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
                 if qty == 0:
-                    self.df_result['current_cash'].iloc[i:] += (target_sell_price*self.bought_dict[_code][1])
-                    self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(self.bought_dict[_code][1]),',')} qty")
+                    # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
+                    tax = (self.bought_dict[_code][0]*self.bought_dict[_code][1]*self.buy_tax) + (target_sell_price*self.bought_dict[_code][1]*self.sell_tax)
+
+                    self.df_result['current_cash'].iloc[i:] += (target_sell_price*self.bought_dict[_code][1] - tax)
+                    self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(self.bought_dict[_code][1]),',')} qty, tax: {format(int(tax),',')} 원")
                     self.df_result['sell'].iloc[i] = target_sell_price
                     del self.bought_dict[_code]
             # 평가금액 갱신
