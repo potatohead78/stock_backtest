@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 from message_log import Message_log
 
 pd.options.mode.chained_assignment = None
@@ -34,16 +35,20 @@ class Backtest_single:
         """매수매도 백테스트 진행.
 
         Args:
-        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
-                                                                                                            "Buy":"['MFI5'] < 20",
-                                                                                                            "Sell":"['MFI5'] > 80",
-                                                                                                            "Buy_price":"['close']",
-                                                                                                            "Sell_price":"['close']"
-                                                                                                            }
+        condition (dict): 매수매도 조건, {
+                                         "Buy":"['MFI5'] < 20",
+                                         "Sell":"['MFI5'] > 80",
+                                         "Buy_price":"['close']",
+                                         "Sell_price":"['close']"
+                                         }
 
         Returns:
-        pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액), 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
+        pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame):
+            OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액), 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
+        check = self.data_check(condition)   # df_ohlc 입력 데이터 검증
+        if check:
+            exit()
         _code = 'temp_name'
         for i, date in enumerate(self.df_ohlc.index):
             ohlc_to_today = self.df_ohlc.loc[:date]
@@ -74,9 +79,31 @@ class Backtest_single:
         self.log.log_exit()
         return pd.concat([self.df_ohlc, self.df_result], axis=1)
 
-    def data_check(self):
-        """df_ohlc 입력 데이터를 검증."""
-        pass
+    def data_check(self, condition:dict) -> bool:
+        """조건에 입력된 컬럼이 df_ohlc 데이터에 존재하는지 검증.
+
+        Args:
+        condition (dict): 매수매도 조건, {
+                                         "Buy":"['MFI5'] < 20",
+                                         "Sell":"['MFI5'] > 80",
+                                         "Buy_price":"['close']",
+                                         "Sell_price":"['close']"
+                                         }
+
+        Returns:
+        bool: False(문제없음), True(df_ohlc에 해당 컬럼이 존재하지 않음)
+        """
+        check_list = ['open', 'high', 'low', 'close']
+        check_list += [eval(match) for key in list(condition)           # condition 값에 존재하는 "[컬럼]"을 추출하여 check_list에 저장
+               for match in re.findall(r'\[(.*?)\]', condition[key])]
+        
+        missing_columns = [check for check in check_list if check not in self.df_ohlc.columns]
+
+        if missing_columns:
+            for column in missing_columns:
+                print(f"'{column}'이 df_ohlc에 존재하지 않습니다.")
+            return True
+        return False
 
 class Strategy:
     """매수와 매도 전략을 작성."""
@@ -86,12 +113,12 @@ class Strategy:
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
         current_cash (int): 현재 금액
-        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
-                                                                                                            "Buy":"['MFI5'] < 20",
-                                                                                                            "Sell":"['MFI5'] > 80",
-                                                                                                            "Buy_price":"['close']",
-                                                                                                            "Sell_price":"['close']"
-                                                                                                            }
+        condition (dict): 매수매도 조건, {
+                                         "Buy":"['MFI5'] < 20",
+                                         "Sell":"['MFI5'] > 80",
+                                         "Buy_price":"['close']",
+                                         "Sell_price":"['close']"
+                                         }
 
         Returns:
         target_buy_price (int): 매수금액 또는 0
@@ -116,12 +143,12 @@ class Strategy:
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
         bought_tuple (tuple(int,int)): (target_buy_price, qty)
-        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
-                                                                                                            "Buy":"['MFI5'] < 20",
-                                                                                                            "Sell":"['MFI5'] > 80",
-                                                                                                            "Buy_price":"['close']",
-                                                                                                            "Sell_price":"['close']"
-                                                                                                            }
+        condition (dict): 매수매도 조건, {
+                                         "Buy":"['MFI5'] < 20",
+                                         "Sell":"['MFI5'] > 80",
+                                         "Buy_price":"['close']",
+                                         "Sell_price":"['close']"
+                                         }
         Returns:
         target_sell_price (int): 매도금액 또는 0
         qty (int) = 0(매도) 또는 bought_tuple[1](매도하지 않음)
