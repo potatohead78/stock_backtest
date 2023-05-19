@@ -59,7 +59,7 @@ class Backtest_single:
 
 class Strategy:
     """매수와 매도 전략을 작성."""
-    def buy_check(self, ohlc_to_today:pd.DataFrame, current_cash:int) -> tuple(int,int):
+    def buy_check(self, ohlc_to_today:pd.DataFrame, current_cash:int) -> tuple[int,int]:
         """매수 신호 체크.
 
         Args:
@@ -78,7 +78,7 @@ class Strategy:
         else:
             return 0, 0
 
-    def sell_check(self, ohlc_to_today:pd.DataFrame, bought_tuple:tuple(int,int)) -> tuple(int,int):
+    def sell_check(self, ohlc_to_today:pd.DataFrame, bought_tuple:tuple[int,int]) -> tuple[int,int]:
         """매도 신호 체크.
         
         Args:
