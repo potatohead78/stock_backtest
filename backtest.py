@@ -22,6 +22,11 @@ class Backtest_single:
         self.current_cash = current_cash
         self.df_ohlc = df_ohlc
         self.df_result = pd.DataFrame(index=self.df_ohlc.index)
+        
+        self.df_ohlc['ma5'] = self.df_ohlc['close'].rolling(window=5).mean()
+        self.df_ohlc['ma20'] = self.df_ohlc['close'].rolling(window=20).mean()
+        self.df_ohlc['ma60'] = self.df_ohlc['close'].rolling(window=60).mean()
+        self.df_ohlc['ma120'] = self.df_ohlc['close'].rolling(window=120).mean()
 
         self.df_result['current_cash'] = self.current_cash
         self.df_result['market_value'] = None
