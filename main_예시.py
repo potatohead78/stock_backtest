@@ -55,11 +55,22 @@ total_money = 10000000
 """총 투자금"""
 
 
-condition = {"Buy":"['MFI5'] < 20", "Sell":"['MFI5'] > 80"}
+condition = {
+                "Buy":"['MFI5'] < 20",
+                "Sell":"['MFI5'] > 80",
+                "Buy_price":"['close']",
+                "Sell_price":"['close']"
+                }
 """매수매도 조건을 입력해주세요."""
 """해당 조건의 데이터는 df_ohlc 컬럼에 존재하여야 합니다."""
 """다중조건도 가능합니다.
-예시){"Buy":"['MFI5'] < 20 and ['volume'] > 1000000", "Sell":"['MFI5'] > 80"}"""
+예시){
+        "Buy":"['MFI5'] < 20 and ['volume'] > 1000000",
+        "Sell":"['MFI5'] > 80 or ['volume'] > 1000000""}
+        "Buy_price":"['close']",
+        "Sell_price":"['close']"
+        }
+"""
 
 
 df_result = Backtest_single(total_money, df_ohlc).simulation(condition)

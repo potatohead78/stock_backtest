@@ -27,7 +27,12 @@ class Backtest_single:
         """매수매도 백테스트 진행.
 
         Args:
-        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건} -> {"Buy":"['MFI5'] < 20", "Sell":"['MFI5'] > 80"}
+        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
+                                                                                                            "Buy":"['MFI5'] < 20",
+                                                                                                            "Sell":"['MFI5'] > 80",
+                                                                                                            "Buy_price":"['close']",
+                                                                                                            "Sell_price":"['close']"
+                                                                                                            }
 
         Returns:
         pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame): OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액), 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
@@ -72,7 +77,12 @@ class Strategy:
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
         current_cash (int): 현재 금액
-        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건} -> {"Buy":"['MFI5'] < 20", "Sell":"['MFI5'] > 80"}
+        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
+                                                                                                            "Buy":"['MFI5'] < 20",
+                                                                                                            "Sell":"['MFI5'] > 80",
+                                                                                                            "Buy_price":"['close']",
+                                                                                                            "Sell_price":"['close']"
+                                                                                                            }
 
         Returns:
         target_buy_price (int): 매수금액 또는 0
@@ -81,9 +91,11 @@ class Strategy:
         """
         buy_condition = condition['Buy'].replace('[','ohlc_to_today[')
         buy_condition = buy_condition.replace(']','].iloc[-1]')
+        buy_price_condition = condition['Buy_price'].replace('[','ohlc_to_today[')
+        buy_price_condition = buy_price_condition.replace(']','].iloc[-1]')
 
         if eval(buy_condition):
-            target_buy_price = int(ohlc_to_today['close'].iloc[-1])
+            target_buy_price = int(eval(buy_price_condition))
             qty = int(current_cash // target_buy_price)
             return target_buy_price, qty
         else:
@@ -95,16 +107,23 @@ class Strategy:
         Args:
         ohlc_to_today (pd.DataFrame): OHLC 및 기타
         bought_tuple (tuple(int,int)): (target_buy_price, qty)
-
+        condition (dict): 매수매도 조건, {"Buy":조건, "Sell":조건, "Buy_price":조건, "Sell_price":조건} ->  {
+                                                                                                            "Buy":"['MFI5'] < 20",
+                                                                                                            "Sell":"['MFI5'] > 80",
+                                                                                                            "Buy_price":"['close']",
+                                                                                                            "Sell_price":"['close']"
+                                                                                                            }
         Returns:
         target_sell_price (int): 매도금액 또는 0
         qty (int) = 0(매도) 또는 bought_tuple[1](매도하지 않음)
         """
         sell_condition = condition['Sell'].replace('[','ohlc_to_today[')
         sell_condition = sell_condition.replace(']','].iloc[-1]')
+        sell_price_condition = condition['Sell_price'].replace('[','ohlc_to_today[')
+        sell_price_condition = sell_price_condition.replace(']','].iloc[-1]')
 
         if eval(sell_condition):
-            target_sell_price = int(ohlc_to_today['close'].iloc[-1])
+            target_sell_price = int(eval(sell_price_condition))
             qty = 0
             return target_sell_price, qty
         else:
