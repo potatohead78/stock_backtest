@@ -73,7 +73,7 @@ condition = {
 """다중조건도 가능합니다.
 예시){
         "Buy":"['MFI5'] < 20 and ['volume'] > 1000000",
-        "Sell":"['MFI5'] > 80 or ['volume'] > 1000000""}
+        "Sell":"['MFI5'] > 80 or ['volume'] > 1000000"}
         "Buy_price":"['close']",
         "Sell_price":"['close']"
         }
