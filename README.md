@@ -44,4 +44,4 @@ df_result = Backtest_single(current_cash, df_ohlc, buy_tax, sell_tax).simulation
 Plotting().single(df_result)
 ```
 <img src="결과/newplot.png" width="600px"></img>
-<img src="결과/newplot1.png" width="600px"></img>
+<img src="결과/newplot_1.png" width="600px"></img>
