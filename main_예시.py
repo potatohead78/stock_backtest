@@ -87,7 +87,3 @@ df_result = Backtest_single(current_cash, df_ohlc, buy_tax, sell_tax).simulation
 
 Plotting().single(df_result)
 """결과를 Plotting 합니다."""
-
-
-# 여러 종목 동시 백테스트
-"""예정"""

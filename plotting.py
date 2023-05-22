@@ -130,3 +130,70 @@ class Plotting:
         config = dict({'scrollZoom': True})
         po.write_html(fig, file=f"결과/{title}.html")
         fig.show(config=config)
+    
+    def multi(self, df_result:pd.DataFrame) -> None:
+        """평가금액, 현금을 plotting 함.
+            웹페이지가 출력되지 않을 경우 F5(새로고침)
+
+        Args:
+        df_result (pd.DataFrame): 'current_cash', 'market_value'
+        """
+        fig = ms.make_subplots(rows=5, cols=1, specs=   [[{}],                  # 평가금액
+                                                        [{'rowspan':4}],        # 차트
+                                                        [None],                 # 차트
+                                                        [None],                 # 차트
+                                                        [None]                  # 차트
+                                                        ],shared_xaxes=True, horizontal_spacing=0.03, vertical_spacing=0.01)
+
+        # row1
+        market_value = go.Scatter(x=df_result.index,
+                                    mode='lines',
+                                    y=df_result['market_value'],
+                                    line=dict(color='blue', width=2),
+                                    showlegend=False,
+                                    name='평가금액')
+        current_cash = go.Scatter(x=df_result.index,
+                                    mode='lines',
+                                    y=df_result['current_cash'],
+                                    line=dict(color='red', width=2),
+                                    showlegend=False,
+                                    name='현금')
+
+        fig.add_trace(market_value,row=1,col=1)
+        fig.add_trace(current_cash,row=1,col=1)
+
+        title = datetime.now().strftime('%Y.%m.%d.%H%M%S')
+
+        fig.update_layout(autosize=True,
+                            xaxis1_rangeslider_visible=False,
+                            xaxis2_rangeslider_visible=False,
+                            margin=dict(l=50,r=50,t=50,b=50),
+                            template='seaborn',
+                            title=f"{title}")
+        fig.update_xaxes(tickformat='%y년%m월%d일',
+                            zeroline=True,
+                            zerolinewidth=1,
+                            zerolinecolor='black',
+                            showgrid=True,
+                            gridwidth=2,
+                            gridcolor='lightgray',
+                            showline=True,
+                            linewidth=2,
+                            linecolor='black',
+                            mirror=True)
+        fig.update_yaxes(tickformat=',d',
+                            zeroline=True,
+                            zerolinewidth=1,
+                            zerolinecolor='black',
+                            showgrid=True,
+                            gridwidth=2,
+                            gridcolor='lightgray',
+                            showline=True,
+                            linewidth=2,
+                            linecolor='black',
+                            mirror=True)
+        fig.update_traces(xhoverformat='%y년%m월%d일')
+
+        config = dict({'scrollZoom': True})
+        po.write_html(fig, file=f"결과/{title}.html")
+        fig.show(config=config)
