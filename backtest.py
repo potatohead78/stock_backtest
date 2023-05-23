@@ -111,10 +111,8 @@ class Backtest_multi:
         self.sell_tax = sell_tax
 
         # 인수로 넣기
-        self.target_buy_count = 5
+        self.target_buy_count = 10
 
-        #self.dict_ohlc['code1'] = self.dict_ohlc['code1'].drop(['2019-02-28'])
-        #self.dict_ohlc['code2'] = self.dict_ohlc['code2'].drop(['2019-02-28','2019-03-04'])
 
         # 종목 중 가장 과거 날짜 추출
         _dict_date = {}
