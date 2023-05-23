@@ -131,13 +131,12 @@ class Plotting:
         po.write_html(fig, file=f"결과/{title}.html")
         fig.show(config=config)
     
-    def multi(self, df_result:pd.DataFrame, dict_ohlc:dict) -> None:
+    def multi(self, df_result:pd.DataFrame) -> None:
         """평가금액, 현금을 plotting 함.
             웹페이지가 출력되지 않을 경우 F5(새로고침)
 
         Args:
         df_result (pd.DataFrame): 'current_cash', 'market_value'
-        dict_ohlc (dict): OHLC 컬럼 및 Strategy()에 필요한 컬럼을 포함하는, 백테스트 종목의 데이터프레임을 모아둔 딕셔너리
         """
         fig = ms.make_subplots(rows=5, cols=1, specs=   [[{}],                  # 평가금액
                                                         [{}],                   # 종목
