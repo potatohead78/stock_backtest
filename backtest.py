@@ -51,7 +51,7 @@ class Backtest_single:
         pd.concat([self.df_ohlc, self.df_result], axis=1) (pd.DataFrame):
             OHLC 및 기타 컬럼 + 'current_cash', 'market_value'(평가금액), 'buy', 'sell'(매도 날짜에 해당하는 매도금액)
         """
-        check = self.data_check(condition)   # df_ohlc 입력 데이터 검증
+        check = Strategy().data_check(condition, self.df_ohlc)   # df_ohlc 입력 데이터 검증
         if check:
             exit()
         _code = 'temp_name'
@@ -88,8 +88,47 @@ class Backtest_single:
         self.log.log_exit()
         return pd.concat([self.df_ohlc, self.df_result], axis=1)
 
-    def data_check(self, condition:dict) -> bool:
-        """조건에 입력된 컬럼이 df_ohlc 데이터에 존재하는지 검증.
+class Backtest_multi:
+    """다중 종목의 백테스트를 진행."""
+    def __init__(self, current_cash:int, dict_ohlc:dict, buy_tax:float=0.00015, sell_tax:float=0.00215) -> None:
+        """
+        Args:
+        current_cash (int): 총 투자금
+        dict_ohlc (dict): OHLC 컬럼 및 Strategy()에 필요한 컬럼을 포함하는, 백테스트 종목의 데이터프레임을 모아둔 딕셔너리
+        buy_tax (float): 0.015% (거래수수료) = 0.015% (기본값)
+        sell_tax (float): 0.015% (거래수수료) + 0.05% (증권거래세) + 0.15% (농어촌특별세) = 0.215% (기본값)
+
+        self.bought_dict: {_code:(target_buy_price, qty)}   (매수금액, 매수개수)
+        self.target_buy_count: 매수 최대 종목 수
+        """
+        self.log = Message_log()
+
+        self.bought_dict = {}
+        self.current_cash = current_cash
+        self.dict_ohlc = dict_ohlc
+
+        self.buy_tax = buy_tax
+        self.sell_tax = sell_tax
+
+        # 인수로 넣기
+        self.target_buy_count = 5
+
+        #self.dict_ohlc['code1'] = self.dict_ohlc['code1'].drop(['2019-02-28'])
+        #self.dict_ohlc['code2'] = self.dict_ohlc['code2'].drop(['2019-02-28','2019-03-04'])
+
+        # 종목 중 가장 과거 날짜 추출
+        _dict_date = {}
+        for code in self.dict_ohlc:
+            _dict_date[code] = self.dict_ohlc[code].index[0]
+        sorted_date = sorted(_dict_date.items(), key=lambda x: x[1])
+        start_code_date = sorted_date[0]
+
+        self.df_result = pd.DataFrame(index=self.dict_ohlc[start_code_date[0]].index)
+        self.df_result['current_cash'] = self.current_cash
+        self.df_result['market_value'] = None
+
+    def simulation(self, condition:dict) -> pd.DataFrame:
+        """매수매도 백테스트 진행.
 
         Args:
         condition (dict): 매수매도 조건, {
@@ -100,19 +139,49 @@ class Backtest_single:
                                          }
 
         Returns:
-        bool: False(문제없음), True(df_ohlc에 해당 컬럼이 존재하지 않음)
+        self.df_result (pd.DataFrame): 'current_cash', 'market_value'(평가금액)
         """
-        check_list = ['open', 'high', 'low', 'close']
-        check_list += [eval(match) for key in list(condition)           # condition 값에 존재하는 "[컬럼]"을 추출하여 check_list에 저장
-               for match in re.findall(r'\[(.*?)\]', condition[key])]
-        
-        missing_columns = [check for check in check_list if check not in self.df_ohlc.columns]
+        for code in list(self.dict_ohlc)[:]:
+            check = Strategy().data_check(condition, self.dict_ohlc[code])   # df_ohlc 입력 데이터 검증
+            if check:
+                exit()
+        # 시작
+        for i, date in enumerate(self.df_result.index):
+            for _code in list(self.dict_ohlc)[:]:
+                ohlc_to_today = self.dict_ohlc[_code].loc[:date]
+                if len(ohlc_to_today) == 0:
+                    continue
+                else:
+                    # Buy
+                    if _code not in list(self.bought_dict)[:] and   \
+                        len(self.bought_dict) < self.target_buy_count:
+                        target_buy_price, qty = Strategy().buy_check(ohlc_to_today, self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)), condition)
+                        if qty > 0:
+                            self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
+                            self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
+                            self.bought_dict[_code] = (target_buy_price, qty)
+                    # Sell
+                    elif _code in list(self.bought_dict)[:]:
+                        target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
+                        if qty == 0:
+                            _target_buy_price = self.bought_dict[_code][0]
+                            _qty_buy = self.bought_dict[_code][1]
 
-        if missing_columns:
-            for column in missing_columns:
-                print(f"'{column}'이 df_ohlc에 존재하지 않습니다.")
-            return True
-        return False
+                            # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
+                            tax = (_target_buy_price*_qty_buy*self.buy_tax) + (target_sell_price*_qty_buy*self.sell_tax)
+
+                            _yield = 100*((target_sell_price*_qty_buy - tax)/(_target_buy_price*_qty_buy))-100
+                            self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
+                            self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
+                            del self.bought_dict[_code]
+
+                    # 평가금액 갱신
+                    self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
+                    for _code in list(self.bought_dict)[:]:
+                        self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
+        
+        self.log.log_exit()
+        return self.df_result
 
 class Strategy:
     """매수와 매도 전략을 작성."""
@@ -174,47 +243,8 @@ class Strategy:
         else:
             return 0, bought_tuple[1]
 
-class Backtest_multi:
-    """다중 종목의 백테스트를 진행."""
-    def __init__(self, current_cash:int, dict_ohlc:dict, buy_tax:float=0.00015, sell_tax:float=0.00215) -> None:
-        """
-        Args:
-        current_cash (int): 총 투자금
-        dict_ohlc (dict): OHLC 컬럼 및 Strategy()에 필요한 컬럼을 포함하는, 백테스트 종목의 데이터프레임을 모아둔 딕셔너리
-        buy_tax (float): 0.015% (거래수수료) = 0.015% (기본값)
-        sell_tax (float): 0.015% (거래수수료) + 0.05% (증권거래세) + 0.15% (농어촌특별세) = 0.215% (기본값)
-
-        self.bought_dict: {_code:(target_buy_price, qty)}   (매수금액, 매수개수)
-        self.target_buy_count: 매수 최대 종목 수
-        """
-        self.log = Message_log()
-
-        self.bought_dict = {}
-        self.current_cash = current_cash
-        self.dict_ohlc = dict_ohlc
-
-        self.buy_tax = buy_tax
-        self.sell_tax = sell_tax
-
-        # 인수로 넣기
-        self.target_buy_count = 5
-
-        #self.dict_ohlc['code1'] = self.dict_ohlc['code1'].drop(['2019-02-28'])
-        #self.dict_ohlc['code2'] = self.dict_ohlc['code2'].drop(['2019-02-28','2019-03-04'])
-
-        # 종목 중 가장 과거 날짜 추출
-        _dict_date = {}
-        for code in self.dict_ohlc:
-            _dict_date[code] = self.dict_ohlc[code].index[0]
-        sorted_date = sorted(_dict_date.items(), key=lambda x: x[1])
-        start_code_date = sorted_date[0]
-
-        self.df_result = pd.DataFrame(index=self.dict_ohlc[start_code_date[0]].index)
-        self.df_result['current_cash'] = self.current_cash
-        self.df_result['market_value'] = None
-
-    def simulation(self, condition:dict) -> pd.DataFrame:
-        """매수매도 백테스트 진행.
+    def data_check(self, condition:dict, df_ohlc:pd.DataFrame) -> bool:
+        """조건에 입력된 컬럼이 df_ohlc 데이터에 존재하는지 검증.
 
         Args:
         condition (dict): 매수매도 조건, {
@@ -223,47 +253,19 @@ class Backtest_multi:
                                          "Buy_price":"['close']",
                                          "Sell_price":"['close']"
                                          }
+        df_ohlc (pd.DataFrame): OHLC
 
         Returns:
-        self.df_result (pd.DataFrame):
-            'current_cash', 'market_value'(평가금액)
+        bool: False(문제없음), True(df_ohlc에 해당 컬럼이 존재하지 않음)
         """
-        # check_data
-
-        # 시작
-        for i, date in enumerate(self.df_result.index):
-            for _code in list(self.dict_ohlc)[:]:
-                ohlc_to_today = self.dict_ohlc[_code].loc[:date]
-                if len(ohlc_to_today) == 0:
-                    continue
-                else:
-                    # Buy
-                    if _code not in list(self.bought_dict)[:] and   \
-                        len(self.bought_dict) < self.target_buy_count:
-                        target_buy_price, qty = Strategy().buy_check(ohlc_to_today, self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)), condition)
-                        if qty > 0:
-                            self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
-                            self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
-                            self.bought_dict[_code] = (target_buy_price, qty)
-                    # Sell
-                    elif _code in list(self.bought_dict)[:]:
-                        target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
-                        if qty == 0:
-                            _target_buy_price = self.bought_dict[_code][0]
-                            _qty_buy = self.bought_dict[_code][1]
-
-                            # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
-                            tax = (_target_buy_price*_qty_buy*self.buy_tax) + (target_sell_price*_qty_buy*self.sell_tax)
-
-                            _yield = 100*((target_sell_price*_qty_buy - tax)/(_target_buy_price*_qty_buy))-100
-                            self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
-                            self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
-                            del self.bought_dict[_code]
-
-                    # 평가금액 갱신
-                    self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
-                    for _code in list(self.bought_dict)[:]:
-                        self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
+        check_list = ['open', 'high', 'low', 'close']
+        check_list += [eval(match) for key in list(condition)           # condition 값에 존재하는 "[컬럼]"을 추출하여 check_list에 저장
+               for match in re.findall(r'\[(.*?)\]', condition[key])]
         
-        self.log.log_exit()
-        return self.df_result
+        missing_columns = [check for check in check_list if check not in df_ohlc.columns]
+
+        if missing_columns:
+            for column in missing_columns:
+                print(f"'{column}'이 df_ohlc에 존재하지 않습니다.")
+            return True
+        return False

@@ -84,10 +84,10 @@ condition = {
 """
 
 
-df_result = Backtest_multi(current_cash, dict_ohlc, buy_tax, sell_tax).simulation(condition)
+df_result, dict_ohlc = Backtest_multi(current_cash, dict_ohlc, buy_tax, sell_tax).simulation(condition)
 """df_result에는 OHLC와 현금, 평가금액, 매수금액, 매도금액 등이 입력 되어있습니다."""
 """기본값은 buy_tax: 0.00015, sell_tax: 0.00215 입니다."""
 
 
-Plotting().multi(df_result)
+Plotting().multi(df_result, dict_ohlc)
 """결과를 Plotting 합니다."""
