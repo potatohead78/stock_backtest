@@ -79,7 +79,7 @@ condition = {
         "Buy":"['MFI5'] < 20 and ['volume'] > 1000000",
         "Sell":"['MFI5'] > 80 or ['volume'] > 1000000",
         "Buy_price":"['close']",
-        "Sell_price":"['close']"
+        "Sell_price":"['close'] if ['MFI5'] > 80 else ['high']"
         }
 """
 
