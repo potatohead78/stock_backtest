@@ -151,9 +151,13 @@ class Backtest_multi:
                     continue
                 else:
                     # Buy
-                    if _code not in list(self.bought_dict)[:] and   \
-                        len(self.bought_dict) < self.target_buy_count:
-                        target_buy_price, qty = Strategy().buy_check(ohlc_to_today, self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)), condition)
+                    if (
+                        _code not in list(self.bought_dict)[:]
+                        and len(self.bought_dict) < self.target_buy_count
+                        ):
+                        target_buy_price, qty = Strategy().buy_check(ohlc_to_today,
+                                                                        self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)),
+                                                                        condition)
                         if qty > 0:
                             self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
                             self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")

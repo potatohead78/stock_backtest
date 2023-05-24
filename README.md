@@ -45,3 +45,6 @@ Plotting().single(df_result)
 ```
 <img src="결과/newplot.png" width="600px"></img>
 <img src="결과/newplot_1.png" width="600px"></img>
+
+**6. 여러 종목**
+- [main_multi_예시.py] 를 참조해주세요
