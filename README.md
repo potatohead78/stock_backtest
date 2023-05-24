@@ -47,4 +47,4 @@ Plotting().single(df_result)
 <img src="결과/newplot_1.png" width="600px"></img>
 
 **6. 여러 종목**
-- [main_multi_예시.py] 를 참조해주세요
+- [main_multi_예시.py](https://github.com/potatohead78/stock_backtest/blob/main/main_multi_%EC%98%88%EC%8B%9C.py) 를 참조해주세요
