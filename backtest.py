@@ -117,8 +117,6 @@ class Backtest_multi:
         # 종목 중 가장 과거 날짜 추출
         _dict_date = {}
         for code in self.dict_ohlc:
-            if len(self.dict_ohlc[code]['close']) <= 1:
-                continue
             _dict_date[code] = self.dict_ohlc[code].index[0]
         sorted_date = sorted(_dict_date.items(), key=lambda x: x[1])
         start_code_date = sorted_date[0]
@@ -148,7 +146,7 @@ class Backtest_multi:
         # 시작
         for i, date in enumerate(self.df_result.index):
             for _code in list(self.dict_ohlc)[:]:
-                ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
+                ohlc_to_today = self.dict_ohlc[_code].loc[:date]
                 if len(ohlc_to_today) == 0:
                     continue
                 else:
@@ -162,29 +160,27 @@ class Backtest_multi:
                                                                         condition)
                         if qty > 0:
                             self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
-                            self.log.printlog(f"{self.df_result.index[i]} BUY {_code}: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
+                            self.log.printlog(f"{self.df_result.index[i]} BUY: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
                             self.bought_dict[_code] = (target_buy_price, qty)
-            # Sell
-            for _code in list(self.bought_dict)[:]:
-                ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
-                target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
-                if qty == 0:
-                    _target_buy_price = self.bought_dict[_code][0]
-                    _qty_buy = self.bought_dict[_code][1]
+                    # Sell
+                    elif _code in list(self.bought_dict)[:]:
+                        target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
+                        if qty == 0:
+                            _target_buy_price = self.bought_dict[_code][0]
+                            _qty_buy = self.bought_dict[_code][1]
 
-                    # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
-                    tax = (_target_buy_price*_qty_buy*self.buy_tax) + (target_sell_price*_qty_buy*self.sell_tax)
+                            # 세금 = (매수금액*개수*매수세금) + (매도금액*개수*매도세금)
+                            tax = (_target_buy_price*_qty_buy*self.buy_tax) + (target_sell_price*_qty_buy*self.sell_tax)
 
-                    _yield = 100*((target_sell_price*_qty_buy - tax)/(_target_buy_price*_qty_buy))-100
-                    self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
-                    self.log.printlog(f"{self.df_result.index[i]} SELL {_code}: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
-                    del self.bought_dict[_code]
+                            _yield = 100*((target_sell_price*_qty_buy - tax)/(_target_buy_price*_qty_buy))-100
+                            self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
+                            self.log.printlog(f"{self.df_result.index[i]} SELL: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
+                            del self.bought_dict[_code]
 
-            # 평가금액 갱신
-            self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
-            for _code in list(self.bought_dict)[:]:
-                ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
-                self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
+                    # 평가금액 갱신
+                    self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
+                    for _code in list(self.bought_dict)[:]:
+                        self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
         
         self.log.log_exit()
         return self.df_result
