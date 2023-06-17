@@ -126,6 +126,8 @@ class Backtest_multi:
         self.df_result = pd.DataFrame(index=self.dict_ohlc[start_code_date[0]].index)
         self.df_result['current_cash'] = self.current_cash
         self.df_result['market_value'] = None
+        self.win = 0
+        self.lose = 0
 
     def simulation(self, condition:dict) -> pd.DataFrame:
         """매수매도 백테스트 진행.
@@ -179,6 +181,10 @@ class Backtest_multi:
                     self.df_result['current_cash'].iloc[i:] += (target_sell_price*_qty_buy - tax)
                     self.log.printlog(f"{self.df_result.index[i]} SELL {_code}: {format(int(target_sell_price),',')} 원, {format(int(_qty_buy),',')} qty, 수익률: {round(_yield,2)} %, tax: {format(int(tax),',')} 원")
                     del self.bought_dict[_code]
+                    if _yield > 0:
+                        self.win += 1
+                    else:
+                        self.lose += 1
 
             # 평가금액 갱신
             self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
@@ -186,6 +192,7 @@ class Backtest_multi:
                 ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
                 self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
         
+        self.log.printlog(f"승률: {100*self.win/(self.win + self.lose)}%")
         self.log.log_exit()
         return self.df_result
 
