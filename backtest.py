@@ -90,11 +90,13 @@ class Backtest_single:
 
 class Backtest_multi:
     """다중 종목의 백테스트를 진행."""
-    def __init__(self, current_cash:int, dict_ohlc:dict, buy_tax:float=0.00015, sell_tax:float=0.00215) -> None:
+    def __init__(self, current_cash:int, dict_ohlc:dict, target_buy_count:int=10, buy_method:int=0, buy_tax:float=0.00015, sell_tax:float=0.00215) -> None:
         """
         Args:
         current_cash (int): 총 투자금
         dict_ohlc (dict): OHLC 컬럼 및 Strategy()에 필요한 컬럼을 포함하는, 백테스트 종목의 데이터프레임을 모아둔 딕셔너리
+        target_buy_count (int): 종목을 매수하는 최대 개수 = 10 (기본값)
+        buy_method (int): 종목당 매수금액을 고정금액((예시) 1000000)또는 변동금액(비율)(0)로 설정합니다. = 0 (기본값)
         buy_tax (float): 0.015% (거래수수료) = 0.015% (기본값)
         sell_tax (float): 0.015% (거래수수료) + 0.05% (증권거래세) + 0.15% (농어촌특별세) = 0.215% (기본값)
 
@@ -107,11 +109,12 @@ class Backtest_multi:
         self.current_cash = current_cash
         self.dict_ohlc = dict_ohlc
 
+        self.target_buy_count = target_buy_count
+        
+        self.buy_method = buy_method
+
         self.buy_tax = buy_tax
         self.sell_tax = sell_tax
-
-        # 인수로 넣기
-        self.target_buy_count = 10
 
 
         # 종목 중 가장 과거 날짜 추출
@@ -126,8 +129,11 @@ class Backtest_multi:
         self.df_result = pd.DataFrame(index=self.dict_ohlc[start_code_date[0]].index)
         self.df_result['current_cash'] = self.current_cash
         self.df_result['market_value'] = None
+
         self.win = 0
         self.lose = 0
+        self.win_avg_rate = 0
+        self.lose_avg_rate = 0
 
     def simulation(self, condition:dict) -> pd.DataFrame:
         """매수매도 백테스트 진행.
@@ -149,6 +155,7 @@ class Backtest_multi:
                 exit()
         # 시작
         for i, date in enumerate(self.df_result.index):
+            _bought_today = []
             for _code in list(self.dict_ohlc)[:]:
                 ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
                 if len(ohlc_to_today) == 0:
@@ -160,14 +167,17 @@ class Backtest_multi:
                         and len(self.bought_dict) < self.target_buy_count
                         ):
                         target_buy_price, qty = Strategy().buy_check(ohlc_to_today,
-                                                                        self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)),
+                                                                        self.buy_method if self.buy_method != 0 else self.df_result['current_cash'].iloc[i]/(self.target_buy_count-len(self.bought_dict)),
                                                                         condition)
                         if qty > 0:
                             self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
                             self.log.printlog(f"{self.df_result.index[i]} BUY {_code}: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
                             self.bought_dict[_code] = (target_buy_price, qty)
+                            _bought_today.append(_code)
             # Sell
             for _code in list(self.bought_dict)[:]:
+                if _code in _bought_today:
+                    continue
                 ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
                 target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
                 if qty == 0:
@@ -183,8 +193,10 @@ class Backtest_multi:
                     del self.bought_dict[_code]
                     if _yield > 0:
                         self.win += 1
+                        self.win_avg_rate += _yield
                     else:
                         self.lose += 1
+                        self.lose_avg_rate += _yield
 
             # 평가금액 갱신
             self.df_result['market_value'].iloc[i] = self.df_result['current_cash'].iloc[i]
@@ -193,6 +205,9 @@ class Backtest_multi:
                 self.df_result['market_value'].iloc[i] += (ohlc_to_today['close'].iloc[-1] * self.bought_dict[_code][1])
         
         self.log.printlog(f"승률: {100*self.win/(self.win + self.lose)}%")
+        self.log.printlog(f"평균이익: {self.win_avg_rate/self.win}")
+        self.log.printlog(f"평균손실: {self.lose_avg_rate/self.lose}")
+        self.log.printlog(f"손익비: {(self.win_avg_rate/self.win) / (self.lose_avg_rate/self.lose)}")
         self.log.log_exit()
         return self.df_result
 
