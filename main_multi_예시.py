@@ -66,6 +66,16 @@ sell_tax = 0.00215
 """buy_tax와 sell_tax 입력은 옵션입니다. 세금을 제외할 때는 각각 0을 입력해주세요."""
 
 
+target_buy_count = 10
+"""종목을 매수하는 최대 개수 = 10 (기본값)"""
+
+
+buy_method = 0
+"""종목당 매수금액을 고정금액((예시) 1000000)또는 변동금액(비율)(0)로 설정합니다. = 0 (기본값)"""
+"""고정금액 선택 시 매수 금액 입력. 해당 금액으로 매수합니다."""
+"""변동금액 선택 시 0을 입력. current_cash/target_buy_count 금액으로 매수합니다."""
+
+
 condition = {
                 "Buy":"['MFI5'] < 20",
                 "Sell":"['MFI5'] > 80",
@@ -84,7 +94,7 @@ condition = {
 """
 
 
-df_result = Backtest_multi(current_cash, dict_ohlc, buy_tax, sell_tax).simulation(condition)
+df_result = Backtest_multi(current_cash, dict_ohlc, target_buy_count, buy_method, buy_tax, sell_tax).simulation(condition)
 """df_result에는 OHLC와 현금, 평가금액, 매수금액, 매도금액 등이 입력 되어있습니다."""
 """기본값은 buy_tax: 0.00015, sell_tax: 0.00215 입니다."""
 
