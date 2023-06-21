@@ -152,6 +152,7 @@ class Backtest_multi:
                 exit()
         # 시작
         for i, date in enumerate(self.df_result.index):
+            _bought_today = []
             for _code in list(self.dict_ohlc)[:]:
                 ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
                 if len(ohlc_to_today) == 0:
@@ -169,8 +170,11 @@ class Backtest_multi:
                             self.df_result['current_cash'].iloc[i:] -= (target_buy_price*qty)
                             self.log.printlog(f"{self.df_result.index[i]} BUY {_code}: {format(int(target_buy_price),',')} 원, {format(int(qty),',')} qty")
                             self.bought_dict[_code] = (target_buy_price, qty)
+                            _bought_today.append(_code)
             # Sell
             for _code in list(self.bought_dict)[:]:
+                if _code in _bought_today:
+                    continue
                 ohlc_to_today = self.dict_ohlc[_code].loc[date:date]
                 target_sell_price, qty = Strategy().sell_check(ohlc_to_today, self.bought_dict[_code], condition)
                 if qty == 0:
