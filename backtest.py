@@ -130,10 +130,10 @@ class Backtest_multi:
         self.df_result['current_cash'] = self.current_cash
         self.df_result['market_value'] = None
 
-        self.win = 0
-        self.lose = 0
-        self.win_avg_rate = 0
-        self.lose_avg_rate = 0
+        self.win = 0.000000000001
+        self.lose = 0.000000000001
+        self.win_avg_rate = 0.000000000001
+        self.lose_avg_rate = 0.000000000001
 
     def simulation(self, condition:dict) -> pd.DataFrame:
         """매수매도 백테스트 진행.

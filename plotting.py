@@ -4,6 +4,8 @@ import plotly.express as px
 import plotly.io as po
 from datetime import datetime
 import pandas as pd
+from pykrx import stock
+import re
 
 class Plotting:
     def single(self, df_result:pd.DataFrame) -> None:
@@ -131,13 +133,22 @@ class Plotting:
         po.write_html(fig, file=f"결과/{title}.html")
         fig.show(config=config)
     
-    def multi(self, df_result:pd.DataFrame) -> None:
+    def multi(self, df_result:pd.DataFrame, df_benchmark:pd.DataFrame) -> None:
         """평가금액, 현금을 plotting 함.
             웹페이지가 출력되지 않을 경우 F5(새로고침)
 
         Args:
         df_result (pd.DataFrame): 'current_cash', 'market_value'
+        df_benchmark (pd.DataFrame): OHLC 벤치마크
         """
+
+        benchmark_name = "Benchmark"
+        if not isinstance(df_benchmark, pd.DataFrame):
+            df_benchmark = stock.get_etf_ohlcv_by_date(df_result.index[0], df_result.index[-1], "069500")
+            df_benchmark = df_benchmark.rename(columns={'종가':'close'})
+            benchmark_name = "KODEX 200"
+        df_benchmark = df_benchmark * (df_result['current_cash'].iloc[0]/df_benchmark['close'].iloc[0])
+
         fig = ms.make_subplots(rows=5, cols=1, specs=   [[{}],                  # 평가금액
                                                         [{}],                   # 종목
                                                         [{'rowspan':3}],        # 차트
@@ -159,8 +170,16 @@ class Plotting:
                                     showlegend=False,
                                     name='현금')
 
+        benchmark = go.Scatter(x=df_benchmark.index,
+                                    mode='lines',
+                                    y=df_benchmark['close'],
+                                    line=dict(color='gray', width=2),
+                                    showlegend=False,
+                                    name=benchmark_name)
+
         fig.add_trace(market_value,row=1,col=1)
         fig.add_trace(current_cash,row=1,col=1)
+        fig.add_trace(benchmark,row=1,col=1)
 
         title = datetime.now().strftime('%Y.%m.%d.%H%M%S')
 

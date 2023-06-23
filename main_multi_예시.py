@@ -55,6 +55,12 @@ dict_ohlc = {'code1':ohlc_maker(), 'code2':ohlc_maker(), 'code3':ohlc_maker()}
 """index에 날짜를 입력합니다. 2019-01-01 형식으로 변경해주세요."""
 
 
+#df_benchmark = 0.9 * ohlc_maker()
+df_benchmark = 0
+"""벤치마크 OHLC 데이터를 수집해주세요."""
+"""0를 입력할 경우 KODEX 200으로 자동 수집, 설정됩니다."""
+
+
 current_cash = 10000000
 """총 투자금"""
 
@@ -99,5 +105,5 @@ df_result = Backtest_multi(current_cash, dict_ohlc, target_buy_count, buy_method
 """기본값은 buy_tax: 0.00015, sell_tax: 0.00215 입니다."""
 
 
-Plotting().multi(df_result)
+Plotting().multi(df_result, df_benchmark)
 """결과를 Plotting 합니다."""
