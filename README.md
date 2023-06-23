@@ -25,6 +25,13 @@ current_cash = 10000000
 buy_tax = 0.00015   # 기본값
 sell_tax = 0.00215  # 기본값
 ```
+-   벤치마크
+```
+#df_benchmark = 0.9 * ohlc_maker()
+df_benchmark = 0
+"""수동: pd.DataFrame형식으로 OHLC 입력"""
+"""자동: 0 입력"""
+```
 **3. 매수매도 조건을 입력하기 (딕셔너리)**
 ```
 condition = {
@@ -41,7 +48,7 @@ df_result = Backtest_single(current_cash, df_ohlc, buy_tax, sell_tax).simulation
 ```
 **5. 그래프**
 ```
-Plotting().single(df_result)
+Plotting().single(df_result, df_benchmark)
 ```
 <img src="결과/newplot.png" width="600px"></img>
 <img src="결과/newplot_1.png" width="600px"></img>
